@@ -7,6 +7,7 @@ const WindowControls = ({ target }) => {
       <div className="close" onClick={() => closeWindow(target)} />
       <div className="minimize" />
       <div className="maximize" />
+      //TODO add callback to min max
     </div>
   )
 }

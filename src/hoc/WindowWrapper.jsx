@@ -27,12 +27,14 @@ const WindowWrapper = (Component, windowKey) => {
       const el = ref.current
       if (!el) return
 
+      const trigger = el.querySelector('#window-header') || el
       const [instance] = Draggable.create(el, {
+        trigger,
         onPress: () => focusWindow(windowKey),
       })
 
       return () => instance.kill()
-    }, [])
+    }, [focusWindow, windowKey])
 
     useLayoutEffect(() => {
       const el = ref.current
@@ -48,7 +50,7 @@ const WindowWrapper = (Component, windowKey) => {
   }
 
   Wrapped.displayName = `WindowWrapper(${
-    Component.displayName || Component.name || 'Compoenent'
+    Component.displayName || Component.name || 'Component'
   })`
 
   return Wrapped

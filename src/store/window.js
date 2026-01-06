@@ -30,6 +30,7 @@ const useWindowStore = create(
         if (!win) return
         win.zIndex = state.nextZIndex++
       }),
+      //TODO add minimize and maximize
   }))
 )
 
