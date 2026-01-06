@@ -31,7 +31,7 @@ const Safari = () => {
             <Search className="icon" />
             <input
               type="text"
-              placeholder="Seach or enter website name"
+              placeholder="Search or enter website name"
               className="flex-1"
             />
           </div>
