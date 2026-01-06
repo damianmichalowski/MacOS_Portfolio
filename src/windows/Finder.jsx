@@ -16,6 +16,16 @@ const Finder = () => {
     if (['fig', 'url'].includes(item.fileType) && item.href)
       return window.open(item.href, '_blank')
 
+    if (item.fileType === 'txt' && item.kind === 'file') {
+      const windowId = `${activeLocation?.id ?? 'root'}:${item.id}:${item.name}`
+      return openWindow('txtfile', { ...item, windowId })
+    }
+
+    if (item.fileType === 'img' && item.kind === 'file') {
+      const windowId = `${activeLocation?.id ?? 'root'}:${item.id}:${item.name}`
+      return openWindow('imgfile', { ...item, windowId })
+    }
+
     openWindow(`${item.fileType}${item.kind}`, item)
   }
 

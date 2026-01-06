@@ -1,21 +1,21 @@
-@import url("https://fonts.googleapis.com/css2?family=Georama:ital,wght@0,100..900;1,100..900&family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=Georama:ital,wght@0,100..900;1,100..900&family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap');
 
-@import "tailwindcss";
+@import 'tailwindcss';
 
 html,
 body {
   width: 100dvw;
   overflow: hidden;
   height: 100dvh;
-  background-image: url("/images/wallpaper.png");
+  background-image: url('/images/wallpaper.png');
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center;
 }
 
 @theme {
-  --font-georama: "Georama", sans-serif;
-  --font-roboto: "Roboto Mono", monospace;
+  --font-georama: 'Georama', sans-serif;
+  --font-roboto: 'Roboto Mono', monospace;
   --breakpoint-3xl: 1920px;
 }
 
@@ -350,7 +350,8 @@ body {
     }
   }
 
-  #txtfile {
+  #txtfile,
+  [data-window-type='txtfile'] {
     @apply w-md absolute top-36 right-32 bg-white shadow-2xl drop-shadow-2xl rounded-xl overflow-hidden;
 
     h2 {
@@ -358,7 +359,8 @@ body {
     }
   }
 
-  #imgfile {
+  #imgfile,
+  [data-window-type='imgfile'] {
     @apply w-xl absolute top-40 left-2/12 bg-white shadow-2xl drop-shadow-2xl rounded-xl overflow-hidden;
 
     #window-header {
