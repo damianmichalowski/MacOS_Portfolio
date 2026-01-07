@@ -18,7 +18,7 @@ const Contact = () => {
         />
 
         <h3>Let's Connect</h3>
-        <p>Got and idea? A bug to squash? Or just wanna talk tech? I'm in.</p>
+        <p>Got an idea? A bug to squash? Or just want to talk tech? I'm in.</p>
         <p>damianmichalowskidm@gmail.com</p>
 
         <ul>
