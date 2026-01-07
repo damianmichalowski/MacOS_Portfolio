@@ -1,4 +1,5 @@
-import { dockApps } from '#constants'
+import { dockApps, locations } from '#constants'
+import useLocationStore from '#store/location'
 import useWindowStore from '#store/window.js'
 import { useGSAP } from '@gsap/react'
 import gsap from 'gsap'
@@ -7,6 +8,7 @@ import { Tooltip } from 'react-tooltip'
 
 const Dock = () => {
   const { openWindow, closeWindow, windows } = useWindowStore()
+  const { setActiveLocation } = useLocationStore()
   const dockRef = useRef(null)
 
   useGSAP(() => {
@@ -74,34 +76,47 @@ const Dock = () => {
     } else {
       openWindow(app.id)
     }
+  }
 
-    console.log(windows)
+  const openTrashInFinder = () => {
+    setActiveLocation(locations.trash)
+    openWindow('finder')
   }
 
   return (
     <section id="dock">
       <div ref={dockRef} className="dock-container">
-        {dockApps.map(({ id, name, icon, canOpen }) => (
-          <div key={id} className="relative flex justify-center">
-            <button
-              type="button"
-              className="dock-icon"
-              aria-label={name}
-              data-tooltip-id="dock-tooltip"
-              data-tooltip-content={name}
-              data-tooltip-delay-show={150}
-              disabled={!canOpen}
-              onClick={() => toggleApp({ id, canOpen })}
-            >
-              <img
-                src={`/images/${icon}`}
-                alt={name}
-                loading="lazy"
-                className={canOpen ? '' : 'opacity-60'}
-              />
-            </button>
-          </div>
-        ))}
+        {dockApps.map(({ id, name, icon, canOpen }) => {
+          const isTrash = id === 'trash'
+          const isDisabled = !canOpen && !isTrash
+
+          const handleClick = () => {
+            if (isTrash) return openTrashInFinder()
+            return toggleApp({ id, canOpen })
+          }
+
+          return (
+            <div key={id} className="relative flex justify-center">
+              <button
+                type="button"
+                className="dock-icon"
+                aria-label={name}
+                data-tooltip-id="dock-tooltip"
+                data-tooltip-content={name}
+                data-tooltip-delay-show={150}
+                disabled={isDisabled}
+                onClick={handleClick}
+              >
+                <img
+                  src={`/images/${icon}`}
+                  alt={name}
+                  loading="lazy"
+                  className={canOpen || isTrash ? '' : 'opacity-60'}
+                />
+              </button>
+            </div>
+          )
+        })}
 
         <Tooltip id="dock-tooltip" place="top" className="tooltip" />
       </div>
