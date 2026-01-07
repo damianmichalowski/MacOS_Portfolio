@@ -2,53 +2,56 @@ import { INITIAL_Z_INDEX, WINDOW_CONFIG } from '#constants'
 import { create } from 'zustand'
 import { immer } from 'zustand/middleware/immer'
 
-const isTxtFileWindowKey = (key) =>
-  key === 'txtfile' || key.startsWith('txtfile:')
+const isWindowKeyOfType = (key, type) =>
+  key === type || key.startsWith(`${type}:`)
 
-const isImgFileWindowKey = (key) =>
-  key === 'imgfile' || key.startsWith('imgfile:')
-
-const getTxtFileIdentity = (data) => {
+const getWindowIdentity = (data) => {
   if (!data) return null
   return (
     data.windowId ??
     data.uid ??
     data.path ??
-    (data.name ? `name:${data.name}` : null) ??
-    null
+    (data.name ? `name:${data.name}` : null)
   )
 }
 
-const findOpenTxtFileWindowKeyByIdentity = (windows, identity) => {
+const findOpenWindowKeyByIdentity = (windows, type, identity) => {
   if (identity == null) return null
   for (const [key, win] of Object.entries(windows)) {
-    if (!isTxtFileWindowKey(key)) continue
+    if (!isWindowKeyOfType(key, type)) continue
     if (!win?.isOpen) continue
-    if (getTxtFileIdentity(win?.data) === identity) return key
+    if (getWindowIdentity(win?.data) === identity) return key
   }
   return null
 }
 
-const getImgFileIdentity = (data) => {
-  if (!data) return null
-  return (
-    data.windowId ??
-    data.uid ??
-    data.path ??
-    (data.name ? `name:${data.name}` : null) ??
-    null
-  )
+const openMultiInstanceWindow = (state, type, data) => {
+  const identity = getWindowIdentity(data)
+  const reuseKey = findOpenWindowKeyByIdentity(state.windows, type, identity)
+
+  const targetKey =
+    reuseKey ??
+    (state.windows[type]?.isOpen
+      ? `${type}:${identity ?? Date.now()}:${state.nextZIndex}`
+      : type)
+
+  if (!state.windows[targetKey]) {
+    state.windows[targetKey] = {
+      isOpen: false,
+      zIndex: INITIAL_Z_INDEX,
+      data: null,
+    }
+  }
+
+  const win = state.windows[targetKey]
+  win.isOpen = true
+  win.zIndex = state.nextZIndex
+  win.data = data ?? win.data
+  state.nextZIndex++
 }
 
-const findOpenImgFileWindowKeyByIdentity = (windows, identity) => {
-  if (identity == null) return null
-  for (const [key, win] of Object.entries(windows)) {
-    if (!isImgFileWindowKey(key)) continue
-    if (!win?.isOpen) continue
-    if (getImgFileIdentity(win?.data) === identity) return key
-  }
-  return null
-}
+const shouldDeleteWindowOnClose = (windowKey) =>
+  windowKey.startsWith('txtfile:') || windowKey.startsWith('imgfile:')
 
 const useWindowStore = create(
   immer((set) => ({
@@ -57,62 +60,10 @@ const useWindowStore = create(
 
     openWindow: (windowKey, data = null) =>
       set((state) => {
-        if (windowKey === 'txtfile') {
-          const identity = getTxtFileIdentity(data)
-          const reuseKey = findOpenTxtFileWindowKeyByIdentity(
-            state.windows,
-            identity
-          )
-          const targetKey =
-            reuseKey ??
-            (state.windows.txtfile?.isOpen
-              ? `txtfile:${identity ?? Date.now()}:${state.nextZIndex}`
-              : 'txtfile')
-
-          if (!state.windows[targetKey]) {
-            state.windows[targetKey] = {
-              isOpen: false,
-              zIndex: INITIAL_Z_INDEX,
-              data: null,
-            }
-          }
-
-          const win = state.windows[targetKey]
-          win.isOpen = true
-          win.zIndex = state.nextZIndex
-          win.data = data ?? win.data
-          state.nextZIndex++
-          return
-        }
-
-        if (windowKey === 'imgfile') {
-          const identity = getImgFileIdentity(data)
-          const reuseKey = findOpenImgFileWindowKeyByIdentity(
-            state.windows,
-            identity
-          )
-
-          const targetKey =
-            reuseKey ??
-            (state.windows.imgfile?.isOpen
-              ? `imgfile:${identity ?? Date.now()}:${state.nextZIndex}`
-              : 'imgfile')
-
-          if (!state.windows[targetKey]) {
-            state.windows[targetKey] = {
-              isOpen: false,
-              zIndex: INITIAL_Z_INDEX,
-              data: null,
-            }
-          }
-
-          const win = state.windows[targetKey]
-          win.isOpen = true
-          win.zIndex = state.nextZIndex
-          win.data = data ?? win.data
-          state.nextZIndex++
-          return
-        }
+        if (windowKey === 'txtfile')
+          return openMultiInstanceWindow(state, 'txtfile', data)
+        if (windowKey === 'imgfile')
+          return openMultiInstanceWindow(state, 'imgfile', data)
 
         const win = state.windows[windowKey]
         if (!win) return
@@ -129,11 +80,7 @@ const useWindowStore = create(
         win.zIndex = INITIAL_Z_INDEX
         win.data = null
 
-        if (windowKey.startsWith('txtfile:')) {
-          delete state.windows[windowKey]
-        }
-
-        if (windowKey.startsWith('imgfile:')) {
+        if (shouldDeleteWindowOnClose(windowKey)) {
           delete state.windows[windowKey]
         }
       }),

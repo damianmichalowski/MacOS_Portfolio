@@ -34,7 +34,7 @@ const TextFile = ({ windowKey }) => {
         {description.length ? (
           <div className="space-y-3">
             {description.map((paragraph, i) => (
-              <p key={i} className="text-sm leading-relaxed">
+              <p key={`${paragraph}-${i}`} className="text-sm leading-relaxed">
                 {paragraph}
               </p>
             ))}
