@@ -17,7 +17,7 @@ const WindowWrapper = (Component, windowKey) => {
     const isMaximized = winState?.isMaximized
     const zIndex = winState?.zIndex
     const ref = useRef(null)
-    const prevTransformRef = useRef(null)
+    const prevGsapStateRef = useRef({ x: 0, y: 0, scale: 1 })
 
     useGSAP(() => {
       const el = ref.current
@@ -31,6 +31,27 @@ const WindowWrapper = (Component, windowKey) => {
         { scale: 1, opacity: 1, y: 0, duration: 0.4, ease: 'power3.out' }
       )
     }, [isOpen])
+
+    useLayoutEffect(() => {
+      const el = ref.current
+      if (!el) return
+
+      if (isMaximized) {
+        prevGsapStateRef.current = {
+          x: Number(gsap.getProperty(el, 'x')) || 0,
+          y: Number(gsap.getProperty(el, 'y')) || 0,
+          scale: Number(gsap.getProperty(el, 'scale')) || 1,
+        }
+
+        // Ensure the window is flush to the viewport while fullscreen.
+        gsap.set(el, { x: 0, y: 0, scale: 1 })
+        return
+      }
+
+      // Restore the previous dragged position after exiting fullscreen.
+      const { x, y, scale } = prevGsapStateRef.current
+      gsap.set(el, { x, y, scale })
+    }, [isMaximized])
 
     useGSAP(() => {
       const el = ref.current
@@ -54,23 +75,6 @@ const WindowWrapper = (Component, windowKey) => {
         el.removeEventListener('pointerdown', onPointerDown)
       }
     }, [focusWindow, resolvedWindowKey, isMaximized])
-
-    useLayoutEffect(() => {
-      const el = ref.current
-      if (!el) return
-
-      if (isMaximized) {
-        prevTransformRef.current = el.style.transform || null
-        el.style.transform = 'none'
-        return
-      }
-
-      if (prevTransformRef.current != null) {
-        el.style.transform = prevTransformRef.current
-      } else {
-        el.style.removeProperty('transform')
-      }
-    }, [isMaximized])
 
     useLayoutEffect(() => {
       const el = ref.current
