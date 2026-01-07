@@ -2,6 +2,57 @@ import { INITIAL_Z_INDEX, WINDOW_CONFIG } from '#constants'
 import { create } from 'zustand'
 import { immer } from 'zustand/middleware/immer'
 
+const isWindowKeyOfType = (key, type) =>
+  key === type || key.startsWith(`${type}:`)
+
+const getWindowIdentity = (data) => {
+  if (!data) return null
+  return (
+    data.windowId ??
+    data.uid ??
+    data.path ??
+    (data.name ? `name:${data.name}` : null)
+  )
+}
+
+const findOpenWindowKeyByIdentity = (windows, type, identity) => {
+  if (identity == null) return null
+  for (const [key, win] of Object.entries(windows)) {
+    if (!isWindowKeyOfType(key, type)) continue
+    if (!win?.isOpen) continue
+    if (getWindowIdentity(win?.data) === identity) return key
+  }
+  return null
+}
+
+const openMultiInstanceWindow = (state, type, data) => {
+  const identity = getWindowIdentity(data)
+  const reuseKey = findOpenWindowKeyByIdentity(state.windows, type, identity)
+
+  const targetKey =
+    reuseKey ??
+    (state.windows[type]?.isOpen
+      ? `${type}:${identity ?? Date.now()}:${state.nextZIndex}`
+      : type)
+
+  if (!state.windows[targetKey]) {
+    state.windows[targetKey] = {
+      isOpen: false,
+      zIndex: INITIAL_Z_INDEX,
+      data: null,
+    }
+  }
+
+  const win = state.windows[targetKey]
+  win.isOpen = true
+  win.zIndex = state.nextZIndex
+  win.data = data ?? win.data
+  state.nextZIndex++
+}
+
+const shouldDeleteWindowOnClose = (windowKey) =>
+  windowKey.startsWith('txtfile:') || windowKey.startsWith('imgfile:')
+
 const useWindowStore = create(
   immer((set) => ({
     windows: WINDOW_CONFIG,
@@ -9,6 +60,11 @@ const useWindowStore = create(
 
     openWindow: (windowKey, data = null) =>
       set((state) => {
+        if (windowKey === 'txtfile')
+          return openMultiInstanceWindow(state, 'txtfile', data)
+        if (windowKey === 'imgfile')
+          return openMultiInstanceWindow(state, 'imgfile', data)
+
         const win = state.windows[windowKey]
         if (!win) return
         win.isOpen = true
@@ -23,6 +79,10 @@ const useWindowStore = create(
         win.isOpen = false
         win.zIndex = INITIAL_Z_INDEX
         win.data = null
+
+        if (shouldDeleteWindowOnClose(windowKey)) {
+          delete state.windows[windowKey]
+        }
       }),
     focusWindow: (windowKey) =>
       set((state) => {
@@ -30,7 +90,7 @@ const useWindowStore = create(
         if (!win) return
         win.zIndex = state.nextZIndex++
       }),
-      //TODO add minimize and maximize
+    //TODO add minimize and maximize
   }))
 )
 

@@ -7,7 +7,14 @@ import { useLayoutEffect, useRef } from 'react'
 const WindowWrapper = (Component, windowKey) => {
   const Wrapped = (props) => {
     const { focusWindow, windows } = useWindowStore()
-    const { isOpen, zIndex } = windows[windowKey]
+    const resolvedWindowKey = windowKey ?? props.windowKey
+    const resolvedWindowType =
+      props.windowType ??
+      (resolvedWindowKey ? resolvedWindowKey.split(':')[0] : null)
+
+    const winState = resolvedWindowKey ? windows?.[resolvedWindowKey] : null
+    const isOpen = winState?.isOpen
+    const zIndex = winState?.zIndex
     const ref = useRef(null)
 
     useGSAP(() => {
@@ -33,7 +40,7 @@ const WindowWrapper = (Component, windowKey) => {
       })
 
       const onPointerDown = () => {
-        focusWindow(windowKey)
+        if (resolvedWindowKey) focusWindow(resolvedWindowKey)
       }
 
       el.addEventListener('pointerdown', onPointerDown)
@@ -42,7 +49,7 @@ const WindowWrapper = (Component, windowKey) => {
         instance.kill()
         el.removeEventListener('pointerdown', onPointerDown)
       }
-    }, [focusWindow, windowKey])
+    }, [focusWindow, resolvedWindowKey])
 
     useLayoutEffect(() => {
       const el = ref.current
@@ -50,9 +57,17 @@ const WindowWrapper = (Component, windowKey) => {
       el.style.display = isOpen ? 'block' : 'none'
     }, [isOpen])
 
+    if (!resolvedWindowKey) return null
+
     return (
-      <section id={windowKey} ref={ref} style={{ zIndex }} className="absolute">
-        <Component {...props} />
+      <section
+        id={resolvedWindowKey}
+        data-window-type={resolvedWindowType}
+        ref={ref}
+        style={{ zIndex }}
+        className="absolute"
+      >
+        <Component {...props} windowKey={resolvedWindowKey} />
       </section>
     )
   }
