@@ -38,6 +38,7 @@ const openMultiInstanceWindow = (state, type, data) => {
   if (!state.windows[targetKey]) {
     state.windows[targetKey] = {
       isOpen: false,
+      isMaximized: false,
       zIndex: INITIAL_Z_INDEX,
       data: null,
     }
@@ -68,15 +69,36 @@ const useWindowStore = create(
         const win = state.windows[windowKey]
         if (!win) return
         win.isOpen = true
+        win.isMaximized = win.isMaximized ?? false
         win.zIndex = state.nextZIndex
         win.data = data ?? win.data
         state.nextZIndex++
       }),
+
+    minimizeWindow: (windowKey) =>
+      set((state) => {
+        const win = state.windows[windowKey]
+        if (!win) return
+        win.isOpen = false
+        win.isMaximized = false
+      }),
+
+    maximizeWindow: (windowKey) =>
+      set((state) => {
+        const win = state.windows[windowKey]
+        if (!win) return
+        win.isOpen = true
+        win.isMaximized = !win.isMaximized
+        win.zIndex = state.nextZIndex
+        state.nextZIndex++
+      }),
+
     closeWindow: (windowKey) =>
       set((state) => {
         const win = state.windows[windowKey]
         if (!win) return
         win.isOpen = false
+        win.isMaximized = false
         win.zIndex = INITIAL_Z_INDEX
         win.data = null
 
